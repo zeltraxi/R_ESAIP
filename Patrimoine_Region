@@ -4,6 +4,7 @@ library(dplyr)
 library(ggplot2)
 # install.packages("tidyr")
 library(tidyr)
+
 ####Import ISF Data####
 old <- getwd() # répertoire courant d'exécution
 setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
@@ -12,11 +13,14 @@ dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
 dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
 dfisf <- data.frame(dFisf)
 dfinsee <- data.frame(dFinsee)
+
 #merge two dataframes
 dfall <- merge(x=dfisf,y=dfinsee,all.y = TRUE)
+
 #####Analyse Régional####
 ####Group By Région####
 dfreg <- dfisf %>% group_by(Région) %>% summarise(personne_redevable = sum(nombre.de.redevables),patrimoine_moyen = sum(patrimoine.moyen),impot_moyen = sum(impôt.moyen))
+
 ####fonction calcul impot moyen par personne redevable####
 calculimpot <- function(dataf){
 	####impot moyen par personne redevable#####
@@ -25,15 +29,18 @@ calculimpot <- function(dataf){
 	dataf$patrimoine_moyen_par_pers_redevable <- with(dataf,round(patrimoine_moyen/personne_redevable))
 	return(dataf)
 }
+
 ###Use Function###
 dfreg <- calculimpot(dfreg)
+
 ####Abbreviation for Region####
 dfreg$Régionabbr <- substr(dfreg$Région, start=1, stop=5)
+
 ####Graphics####
 barplot(dfreg$patrimoine_moyen_par_pers_redevable,
-main = "patrimoine moyen par personne redevable en fonction des régions",
-xlab = "Régions",
-ylab = "Sommes en Euro",
-names.arg = dfreg$Régionabbr,
-col = "navy",
-cex.names = 0.3)
+	main = "patrimoine moyen par personne redevable en fonction des régions",
+	xlab = "Régions",
+	ylab = "Sommes en Euro",
+	names.arg = dfreg$Régionabbr,
+	col = "navy",
+	cex.names = 0.3)
