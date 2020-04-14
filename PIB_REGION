@@ -1,0 +1,36 @@
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("ggplot2")
+library(ggplot2)
+# install.packages("tidyr")
+library(tidyr)
+
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+
+#merge two dataframes
+dfall <- merge(x=dfisf,y=dfinsee,all.y = TRUE)
+
+####Nombre de personne pour produire PIB régional####
+dfall <- dfall %>% drop_na(Région)
+dfpibreg <- dfall %>% group_by(Région) %>% summarise(popregion = sum(Population),PIB = mean(PIB.Régionnal))
+dfpibreg$poppib <- dfpibreg$PIB / dfpibreg$popregion
+dfpibreg$Régionabbr <- substr(dfpibreg$Région, start=1, stop=5)
+
+####Graphics####
+barplot(dfpibreg$poppib,
+		main = "PIB par Habitant par région",
+		xlab = "Région",
+		ylab = "PIB par habitant",
+		names.arg = dfpibreg$Régionabbr,
+		col = "navy",
+		cex.names = 0.4)
+		
+#### Etonnnemment le PIB par habitant est le plus haut en Guadeloupe. Les autres DOMTOM sont très en retrait sur cet indicateur
+#### Les résultats pour le reste des régions est plutot homogène.
