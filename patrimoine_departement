@@ -1,0 +1,43 @@
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("ggplot2")
+library(ggplot2)
+# install.packages("tidyr")
+library(tidyr)
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+#merge two dataframes
+dfall <- merge(x=dfisf,y=dfinsee,all.y = TRUE)
+
+####fonction calcul impot moyen par personne redevable####
+calculimpot <- function(dataf){
+  ####impot moyen par personne redevable#####
+  dataf$impot_moyen_par_pers_redevable <- with(dataf,round(impot_moyen/personne_redevable))
+  ####patrimoine moyen par personne redevable#####
+  dataf$patrimoine_moyen_par_pers_redevable <- with(dataf,round(patrimoine_moyen/personne_redevable))
+  return(dataf)
+}
+
+####Analyse department####
+departement <- function(region){
+  dfdep <- dfisf[dfisf[, "Région"] == region,]
+  dfdep <- dfdep %>% group_by(Départements) %>% summarise(personne_redevable = sum(nombre.de.redevables),patrimoine_moyen = sum(patrimoine.moyen),impot_moyen = sum(impôt.moyen))
+  dfdep <- calculimpot(dfdep)
+  return(dfdep)
+}
+
+####Analyse Bretagne####
+dfdep <- departement("BRETAGNE")
+####Graphics####
+barplot(dfdep$patrimoine_moyen_par_pers_redevable,
+        main = "patrimoine moyen par personne redevable",
+        xlab = "BRETAGNE",
+        ylab = "Somme en Euro",
+        names.arg = dfdep$Départements,
+        col = "navy")
