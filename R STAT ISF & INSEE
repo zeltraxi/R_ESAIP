@@ -1,0 +1,35 @@
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("ggplot2")
+library(ggplot2)
+
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+
+####ISF overall statistics####
+for (i in 5:7){
+   print(colnames(dfisf)[i])
+   print(paste0("Moyenne :",round(colMeans(dfisf[i],na.rm = TRUE),2)))
+   print(paste0("Mediane :",apply(dfisf[i], 2, FUN = median)))
+   print(paste0("Variance :",round(var(dfisf[i]),2)))
+   print(paste0("Sample standard deviation :",round(sd(as.numeric(unlist(dfisf[i]))),2)))
+  print(paste0("Population standard deviation ",round((sd(as.numeric(unlist(dfisf[i]))) * sqrt((nrow(dfisf)-1)/nrow(dfisf))),2)))
+   cat("\n")
+  }
+  
+####Insee overall statistics####
+for (i in 4:10){
+   print(colnames(dfinsee)[i])
+   print(paste0("Moyenne :",round(colMeans(dfinsee[i],na.rm = TRUE),2)))
+   print(paste0("Mediane :",apply(dfinsee[i], 2, FUN = median)))
+   print(paste0("Variance :",round(var(dfinsee[i]),2)))
+   print(paste0("Sample standard deviation :",round(sd(as.numeric(unlist(dfinsee[i]))),2)))
+   print(paste0("Population standard deviation ",round((sd(as.numeric(unlist(dfinsee[i]))) * sqrt((nrow(dfinsee)-1)/nrow(dfinsee))),2)))
+   cat("\n")
+   }
