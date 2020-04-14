@@ -1,0 +1,32 @@
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("ggplot2")
+library(ggplot2)
+
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+#merge two dataframes
+dfall <- merge(x=dfisf,y=dfinsee,all.y = TRUE)
+
+#### Nombre d'hotel et camping en fonction des logements vacants par département ####
+dfinsee$log <- dfinsee$Nb.Camping + dfinsee$Nb.Hotel
+dflogdep <- dfinsee %>% group_by(DEP) %>% summarise(Nb.Log.Vacants = sum(Nb.Log.Vacants),logement = sum(log))
+dflogdep <- dflogdep %>% drop_na(logement)
+dflogdep$log <- round(dflogdep$Nb.Log.Vacants / dflogdep$logement)
+
+barplot(dflogdep$log,
+		main = "Nombre de logements libres par département en fonction du nombre d'hotel et camping ",
+		xlab = "Département",
+		ylab = "Nombre de logements libres par nombre d'hotel et camping",
+		names.arg = dflogdep$DEP,
+		col = "navy",
+		cex.names=0.4)
+    
+####On remarque que le plus grand patrimoine par personne redevable est perçu au Cotes d'Armor.
+#### Etrangement la région dynamique de l'Ille et Vilaine et rennes est loin des revenues des autres régions.
