@@ -1,0 +1,39 @@
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("ggplot2")
+library(ggplot2)
+# install.packages("tidyr") #tidy
+library(tidyr)
+
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfinsee <- data.frame(dFinsee)
+
+#trier la dataframe pour enlever les régions avec des données manquantes
+dfinsee$DEP <- as.numeric(as.character(dfinsee$DEP))
+
+dfall <- merge(x=dfisf,y=dfinsee,by="Code.commune", type="inner")
+dfall$DEP <- dfall$DEP[dfall$DEP < 96]
+#### Nombre d'hotel et camping en fonction des logements vacants par département ####
+dfall$log <- dfall$Nb.Camping + dfall$Nb.Hotel
+dflogdep <- dfall %>% group_by(Départements) %>% summarise(Nb.Log.Vacants = sum(Nb.Log.Vacants),logement = sum(log))
+dflogdep <- dflogdep %>% drop_na(logement)
+dflogdep$log <- dflogdep$Nb.Log.Vacants
+
+#Importation des formes
+formes <- getData(name="GADM", country="FRA", level=2)
+formes$NAME_2 <- toupper(formes$NAME_2)
+
+#### Nombre de redevable par Région en fonction de sa population####
+idx <- match(formes$NAME_2, dflogdep$Départements)
+# règle de concordance
+concordance <- dflogdep[idx, "log"]
+formes$log <- concordance
+
+#établissemment de la charte des coupeurs puis tracage de la carte en utilisant
+couleurs <- colorRampPalette(c('red', 'green'))
+spplot(formes, "log",col.regions=couleurs(30),  main=list(label="Nombre de logements vacants par Département en France métropolitaine",cex=.8))
