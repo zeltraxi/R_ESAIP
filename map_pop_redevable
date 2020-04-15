@@ -1,0 +1,41 @@
+# install.packages("dplyr") #Dataframe
+library(dplyr)
+# install.packages("ggplot2") #Plot
+library(ggplot2)
+# install.packages("tidyr") #tidy
+library(tidyr)
+# install.packages("raster") #raster
+library("raster")
+
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+
+dfall <- merge(x=dfisf,y=dfinsee,by="Code.commune", type="inner")
+
+#Calcul par région  
+dfreg <- dfall %>% group_by(Région) %>% summarise(personne_redevable = sum(nombre.de.redevables),pop = sum(Population))
+
+#trier la dataframe pour garder les régions métropolitaines
+dfreg <- subset(dfreg, dfreg$Région!= "GUADELOUPE" & dfreg$Région!= "LA REUNION" & dfreg$Région!= "GUYANE" & dfreg$Région!= "MARTINIQUE")
+
+dfreg$calcul <- dfreg$personne_redevable/dfreg$pop
+  
+#Importation des formes
+formes <- getData(name="GADM", country="FRA", level=1)
+formes$NAME_1 <- toupper(formes$NAME_1)
+
+#### Nombre de redevable par Région en fonction de sa population####
+idx <- match(formes$NAME_1, dfreg$Région)
+# règle de concordance
+concordance <- dfreg[idx, "calcul"]
+formes$calcul <- concordance
+
+#établissemment de la charte des coupeurs puis tracage de la carte en utilisant
+couleurs <- colorRampPalette(c('red', 'green'))
+spplot(formes, "calcul",col.regions=couleurs(30),  main=list(label="Nombre de personne redevable en fonction de la population par region en France métropolitaine",cex=.8))
