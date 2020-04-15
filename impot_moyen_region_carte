@@ -1,1 +1,40 @@
+# install.packages("dplyr") #Dataframe
+library(dplyr)
+# install.packages("ggplot2") #Plot
+library(ggplot2)
+# install.packages("tidyr") #tidy
+library(tidyr)
+# install.packages("raster") #raster
+library("raster")
 
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+
+#Calcul par région  
+dfreg <- dfisf %>% group_by(Région) %>% summarise(personne_redevable = sum(nombre.de.redevables),patrimoine_moyen = mean(patrimoine.moyen),impot_moyen = mean(impôt.moyen))
+
+#trier la dataframe pour garder les régions métropolitaines
+dfreg <- subset(dfreg, dfreg$Région!= "GUADELOUPE" & dfreg$Région!= "LA REUNION" & dfreg$Région!= "GUYANE" & dfreg$Région!= "MARTINIQUE")
+
+#Importation des formes
+formes <- getData(name="GADM", country="FRA", level=1)
+formes$NAME_1 <- toupper(formes$NAME_1)
+
+#### Somme des Impots par Région####
+#Établissement de l'index
+idx <- match(formes$NAME_1, dfreg$Région)
+
+# règle de concordance
+concordance <- dfreg[idx, "impot_moyen"]
+formes$impot_moyen <- concordance
+
+
+#établissemment de la charte des coupeurs puis tracage de la carte en utilisant
+couleurs <- colorRampPalette(c('red', 'green'))
+spplot(formes, "impot_moyen",col.regions=couleurs(30),  main=list(label="Impot moyen par region en France métropolitaine",cex=.8))
