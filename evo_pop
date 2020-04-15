@@ -1,0 +1,44 @@
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("ggplot2")
+library(ggplot2)
+# install.packages("tidyr")
+library(tidyr)
+# install.packages("raster") #raster
+library("raster")
+
+####Import ISF Data####
+old <- getwd() # répertoire courant d'exécution
+setwd(dir= "C:/Users/Guillaume/Documents/esaip/IR5/R") # modifier le répertoire courant
+getwd()
+dFisf <- read.csv2("./isf2016Nettoye.csv",sep=";")
+dFinsee <- read.csv2("./MDB-INSEE-V2.csv",sep=";")
+dfisf <- data.frame(dFisf)
+dfinsee <- data.frame(dFinsee)
+
+#merge two dataframes
+dfall <- merge(x=dfisf,y=dfinsee,all.y = TRUE)
+
+dfreg <- dfall %>% group_by(Région) %>% summarise(evo_pop = sum(Evolution.Population), pop = sum(Population))
+
+#trier la dataframe pour garder les régions métropolitaines
+dfreg <- subset(dfreg, dfreg$Région!= "GUADELOUPE" & dfreg$Région!= "LA REUNION" & dfreg$Région!= "GUYANE" & dfreg$Région!= "MARTINIQUE")
+dfreg$perc <- dfreg$evo_pop/dfreg$pop
+#Importation des formes
+formes <- getData(name="GADM", country="FRA", level=1)
+formes$NAME_1 <- toupper(formes$NAME_1)
+
+#### Somme des Impots par Région####
+#Établissement de l'index
+idx <- match(formes$NAME_1, dfreg$Région)
+
+# règle de concordance
+concordance <- dfreg[idx, "evo_pop"]
+formes$evo <- concordance
+concordance <- dfreg[idx, "perc"]
+formes$perc <- concordance
+
+#établissemment de la charte des coupeurs puis tracage de la carte en utilisant
+couleurs <- colorRampPalette(c('red', 'green'))
+spplot(formes, "evo",col.regions=couleurs(30), labels("perc"),  main=list(label="Evolution de la population par region en France métropolitaine",cex=.8))
+
